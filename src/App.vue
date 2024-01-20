@@ -1,6 +1,9 @@
 <script setup>
-import { reactive } from "vue";
+import { ref, reactive } from "vue";
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
+const refMyForm = ref(null);
 const form = reactive({
   name: "",
   region: "",
@@ -12,8 +15,27 @@ const form = reactive({
   desc: "",
 });
 
-const onExportPdf = () => {
-  console.log("onExportPdf  ");
+const onExportPdf = async () => {
+  const formPadding = 10;
+
+  const w = refMyForm.value.scrollWidth;
+  const h = refMyForm.value.scrollHeight;
+
+  const canvas = await html2canvas(refMyForm.value, {
+    scale: 5,
+    useCORS: true,
+    allowTaint: true,
+    logging: true,
+    width: w + formPadding * 2,
+    height: h + formPadding * 2,
+  });
+
+  const imgData = canvas.toDataURL("image/png");
+  const pdf = new jsPDF("p", "mm", "a4");
+  const scaleFactor = (pdf.internal.pageSize.width - formPadding * 2) / canvas.width;
+
+  pdf.addImage(imgData, "PNG", formPadding, formPadding, canvas.width * scaleFactor, canvas.height * scaleFactor);
+  pdf.save("my-form.pdf");
 };
 
 const onExportPdfWithWatermark = () => {
@@ -22,7 +44,7 @@ const onExportPdfWithWatermark = () => {
 </script>
 
 <template>
-  <div class="my-form">
+  <div ref="refMyForm" class="my-form">
     <el-form :model="form" label-width="120px">
       <el-form-item label="">
         <h1>Hello World</h1>
@@ -90,6 +112,7 @@ const onExportPdfWithWatermark = () => {
   padding: 20px 30px;
   border: 1px solid #eee;
   border-radius: 5px;
+  background-color: honeydew;
 }
 
 .button-group {
